@@ -4,6 +4,7 @@ import java.util.ListIterator;
 
 public class Main {
     public static void main(String[] args) {
+
         Zoo zoo = new Zoo();
         ListIterator<Animal> zoo_iter = zoo.Iterator();
 
@@ -24,5 +25,6 @@ public class Main {
             var a = zoo_iter.next();
             System.out.println(a.toString());
         }
+
     }
 }
