@@ -26,7 +26,7 @@ public class Main {
         }
 
         // ex2
-        zoo_iter.add(new Whale("Wili");
+        zoo_iter.add(new Whale("Willy"));
 */
     }
 }
