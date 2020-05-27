@@ -1,1 +1,6 @@
-/out/production/java-oop-evaluation/ac/elevation/java/oop/evaluation/*.class
+.gradle
+.settings
+.vscode
+.project
+.classpath
+build

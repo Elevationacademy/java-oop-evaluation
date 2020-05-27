@@ -1,0 +1,93 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+tasks.withType(Test) {
+  testLogging {
+    exceptionFormat "full"
+    events "started", "skipped", "passed", "failed", "standard_out"
+    showStandardStreams true
+    showExceptions true
+    showCauses true
+    showStackTraces true
+  }
+}
+
+def folderMap = [:]
+def folderList = [];
+FileCollection testFolderCollection = files { file(".hg").listFiles() }
+testFolderCollection.each {
+    if (it.name != '.git') {
+        def folderPath = it.path
+        folderList.push(folderPath)
+        FileCollection testFileCollection = files { file(folderPath).listFiles() }
+        testFileCollection.each {
+            def filePath = it.path
+            def splt = filePath.split('/');
+            folderMap[it.name.substring(0, it.name.size() - 5)] = splt[splt.size()-2]
+        }
+    }
+}
+
+sourceSets.test.java.srcDirs = folderList
+
+gradle.buildFinished { buildResult ->
+    def output = []
+    def list = []
+    def dir = files { file("./build/test-results/test").listFiles() }
+    dir.each {
+        if (it.name.endsWith('.xml')) {
+            list << it
+        }
+    }
+    list.each {
+        def file = it
+        def parsed = new XmlParser().parseText(file.text)
+        def handle
+        handle = { node ->
+            if( node instanceof String ) {
+                node
+            }
+            else if (!node.'*') {
+                [ 'testName': node.'@name' ]
+            }
+            else {
+                [ (node.name()): node.collect( handle ) ]
+            }
+        }
+
+        def jsonObject = [ (parsed.name()): parsed.collect { node ->
+            if(node.'@name') {
+                [ (node.name()): node.collect(handle), 'testName': node.'@name' ]
+            }
+            else {
+                [ (node.name()): node.collect(handle) ]
+            }
+        } ]
+        String name = parsed.'@name'.substring(parsed.'@name'.lastIndexOf('.') + 1)
+        jsonObject.put("testSuiteName", name)
+        jsonObject.put("testFolderName", folderMap[name])
+        def json = new groovy.json.JsonBuilder(jsonObject)
+
+        output << json
+    }
+    if (buildResult.failure) {
+        String compliationFailure = buildResult.failure
+        if (compliationFailure.endsWith('\':compileTestJava\'.')) {
+            output.add ('compilationError': 'true')
+        }
+    }
+    File file = new File('./', 'test-results.json')
+    file.write(new groovy.json.JsonBuilder(output).toPrettyString())
+}
