@@ -2,6 +2,11 @@ plugins {
     id 'java'
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
 group 'org.example'
 version '1.0-SNAPSHOT'
 
@@ -10,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testImplementation 'junit:junit:4.13'
 }
 
 tasks.withType(Test) {
@@ -26,7 +31,7 @@ tasks.withType(Test) {
 
 def folderMap = [:]
 def folderList = [];
-FileCollection testFolderCollection = files { file(".hg").listFiles() }
+FileCollection testFolderCollection = files { file(".tests").listFiles() }
 testFolderCollection.each {
     if (it.name != '.git') {
         def folderPath = it.path
@@ -41,6 +46,22 @@ testFolderCollection.each {
 }
 
 sourceSets.test.java.srcDirs = folderList
+
+compileTestJava {
+    classpath += files(".compiledTests");
+}
+
+task compiledTestsCopy(type: Copy) {
+
+    from '.compiledTests'
+    include '*.class'
+    into 'build/classes/java/test/com'
+}
+
+test {
+      dependsOn(compiledTestsCopy)
+      testClassesDirs += files( {".compiledTests"});
+}
 
 gradle.buildFinished { buildResult ->
     def output = []
@@ -83,7 +104,7 @@ gradle.buildFinished { buildResult ->
         output << json
     }
     if (buildResult.failure) {
-        String compliationFailure = buildResult.failure
+        String compliationFailure = buildResult.failure;
         if (compliationFailure.endsWith('\':compileTestJava\'.')) {
             output.add ('compilationError': 'true')
         }
