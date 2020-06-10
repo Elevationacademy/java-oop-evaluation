@@ -45,7 +45,7 @@ testFolderCollection.each {
     }
 }
 
-sourceSets.test.java.srcDirs = folderList
+//sourceSets.test.java.srcDirs = folderList
 
 compileTestJava {
     classpath += files(".compiledTests");
