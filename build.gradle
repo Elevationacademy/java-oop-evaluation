@@ -31,7 +31,7 @@ tasks.withType(Test) {
 
 def folderMap = [:]
 def folderList = [];
-FileCollection testFolderCollection = files { file(".tests").listFiles() }
+FileCollection testFolderCollection = files { file(".hg").listFiles() }
 testFolderCollection.each {
     if (it.name != '.git') {
         def folderPath = it.path
